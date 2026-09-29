@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家储日记 · 台账</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232F6B4F' d='M3 5h18a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm0 7h18a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 7h18a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z'/%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#F5F1E7;
+  --paper:#FFFDF7;
+  --paper-2:#FAF6EC;
+  --ink:#2B2824;
+  --ink-soft:#6E675B;
+  --line:#E4DCC9;
+  --line-2:#ECE5D5;
+  --green:#2F6B4F;
+  --green-deep:#234E39;
+  --green-soft:#E6EFE5;
+  --amber:#A9652A;
+  --amber-deep:#7E4A1D;
+  --amber-soft:#F5E7D4;
+  --gray:#8A8375;
+  --gray-soft:#EFEBE0;
+  --red-soft:#F4E2DE;
+  --red:#A4553F;
+  --shadow:0 1px 2px rgba(60,50,30,.06),0 8px 24px -18px rgba(60,50,30,.35);
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.6;
+  min-height:100vh;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 112px}
+.view{display:block}
+/* ===== 底部导航 ===== */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;background:var(--paper);border-top:1px solid var(--line);box-shadow:0 -8px 24px -18px rgba(60,50,30,.45);max-width:1080px;margin:0 auto}
+.tabbar .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;font-size:11.5px;font-weight:600;color:var(--ink-soft);background:transparent;border:none;cursor:pointer;padding:8px 0 9px;transition:background .15s,color .15s}
+.tabbar .tab svg{width:21px;height:21px}
+.tabbar .tab.on{color:var(--green);font-weight:800;background:var(--green-soft)}
+.tabbar .tab:active{opacity:.7}
+/* ===== 在库清单 4 列桌面列宽 ===== */
+#viewActive colgroup col.c-name{width:38%}
+#viewActive colgroup col.c-qty{width:18%}
+#viewActive colgroup col.c-val{width:20%}
+#viewActive colgroup col.c-ops{width:24%}
+/* ===== 商品详情（二级菜单） ===== */
+.detail-body{padding:8px 20px 2px;display:flex;flex-direction:column}
+.drow{display:flex;justify-content:space-between;gap:18px;padding:9px 2px;border-bottom:1px dashed var(--line-2);font-size:14px}
+.drow:last-child{border-bottom:none}
+.drow .dk{color:var(--ink-soft);font-weight:600;flex:0 0 auto}
+.drow .dv{text-align:right;word-break:break-all}
+.detail-ops{display:flex;gap:10px;padding:14px 20px 0}
+.detail-ops .btn{flex:1;justify-content:center}
+
+/* ===== 顶部 ===== */
+.topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand .mark{
+  width:46px;height:46px;border-radius:12px;background:var(--green);
+  display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto;
+  box-shadow:0 6px 16px -6px rgba(47,107,79,.6);
+}
+.brand h1{font-size:24px;font-weight:800;letter-spacing:.5px;line-height:1.2}
+.brand .sub{color:var(--ink-soft);font-size:13px;margin-top:2px}
+.top-actions{display:flex;gap:10px;align-items:center}
+.top-actions .btn{min-width:100px;justify-content:center}
+
+/* ===== 库存切换 ===== */
+.book-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;margin-bottom:2px;scrollbar-width:none}
+.book-tabs::-webkit-scrollbar{display:none}
+.book-chip{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;cursor:pointer;overflow:hidden;transition:all .15s ease}
+.book-chip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.book-chip .book-name{padding:7px 4px 7px 14px;cursor:pointer}
+.book-chip .book-del{width:26px;height:26px;margin:4px 5px 4px 0;border:none;background:transparent;color:inherit;font-size:15px;line-height:1;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-family:inherit;transition:background .15s ease}
+.book-chip .book-del:hover{background:rgba(0,0,0,.12)}
+.book-chip.on .book-del{color:#fff}
+.book-tab{flex:0 0 auto;padding:7px 15px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;white-space:nowrap;transition:all .15s ease}
+.book-tab.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.book-add{color:var(--primary);border-style:dashed}
+.btn-danger{background:#c0392b;color:#fff}
+.btn-danger:active{background:#a93226}
+.confirm-body{font-size:14.5px;color:var(--ink);line-height:1.7;padding:4px 2px 10px}
+
+/* ===== 按钮 ===== */
+.btn{
+  font-family:inherit;font-size:14px;font-weight:600;border:none;cursor:pointer;
+  border-radius:10px;padding:10px 16px;display:inline-flex;align-items:center;gap:7px;
+  transition:transform .06s ease,background .15s ease,box-shadow .15s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:17px;height:17px;flex:0 0 auto}
+.btn-primary{background:var(--green);color:#fff}
+.btn-primary:hover{background:var(--green-deep)}
+.btn-ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{background:var(--paper-2)}
+.btn-in{background:var(--green-soft);color:var(--green-deep)}
+.btn-in:hover{background:#d5e4d2}
+.btn-out{background:var(--amber-soft);color:var(--amber-deep)}
+.btn-out:hover{background:#eecfae}
+.btn-restore{background:var(--gray-soft);color:var(--ink);border:1px solid var(--line)}
+.btn-restore:hover{background:#e3dcc9}
+.btn-sm{padding:7px 11px;font-size:13px;border-radius:9px}
+.btn-sm svg{width:15px;height:15px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+
+/* ===== 统计 ===== */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.stat.s-green::before{background:var(--green)}
+.stat.s-amber::before{background:var(--amber)}
+.stat.s-gray::before{background:var(--gray)}
+.stat.s-accent::before{background:var(--green)}
+.stat .lab{font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+.stat .lab svg{width:15px;height:15px;opacity:.7}
+.stat .num{font-size:27px;font-weight:800;letter-spacing:.3px;margin-top:6px;line-height:1.1}
+.stat .num small{font-size:13px;font-weight:600;color:var(--ink-soft)}
+
+/* ===== 面板卡片 ===== */
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 20px;border-bottom:1px solid var(--line-2);flex-wrap:wrap}
+.panel-hd .ttl{font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px}
+.panel-hd .ttl svg{width:19px;height:19px;color:var(--green)}
+.panel-bd{padding:20px}
+
+/* ===== 新增表单 ===== */
+#addPanel{display:none}
+#addPanel.open{display:block;animation:slide .22s ease}
+@keyframes slide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12.5px;color:var(--ink-soft);font-weight:600}
+.field input,.field select{
+  font-family:inherit;font-size:14px;color:var(--ink);
+  border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:#fff;width:100%;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(47,107,79,.12)}
+.form .btn{white-space:nowrap}
+.hint{font-size:12px;color:var(--ink-soft);margin-top:8px}
+
+/* ===== 筛选 ===== */
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--line-2)}
+.search{position:relative;flex:1;min-width:200px}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-soft)}
+.search input{width:100%;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:9px 12px 9px 34px;background:#fff;color:var(--ink)}
+.search input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(47,107,79,.12)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  font-family:inherit;font-size:13px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+  border-radius:999px;padding:6px 13px;cursor:pointer;transition:all .15s;
+}
+.chip:hover{border-color:var(--green);color:var(--green)}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff}
+.time-filter{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;padding:9px 14px;border-bottom:1px solid var(--line-2);background:#FAFBF9}
+.tf-lab{font-size:12px;font-weight:600;color:var(--ink-soft);white-space:nowrap;flex:0 0 auto}
+.tf-in{flex:1 1 0;min-width:0;max-width:130px;border:1px solid var(--line);border-radius:8px;padding:6px 6px;font-size:12px;background:#fff;color:var(--ink);font-family:inherit}
+.tf-in:focus{outline:none;border-color:var(--green)}
+.tf-sep{color:var(--ink-soft);font-size:11px;flex:0 0 auto}
+.tf-clear{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink-soft);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+.tf-clear:active{background:var(--line-2)}
+.tf-on .tf-clear{color:var(--green);border-color:var(--green)}
+
+/* ===== 表格 ===== */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:760px}
+colgroup col.c-name{width:22%}
+colgroup col.c-cat{width:11%}
+colgroup col.c-qty{width:12%}
+colgroup col.c-price{width:11%}
+colgroup col.c-val{width:11%}
+colgroup col.c-ch{width:13%}
+colgroup col.c-ops{width:20%}
+thead th{
+  text-align:left;font-size:12px;font-weight:700;color:var(--ink-soft);
+  padding:11px 14px;background:var(--paper-2);border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+tbody td{padding:13px 14px;border-bottom:1px solid var(--line-2);font-size:14px;vertical-align:middle}
+tbody tr:hover{background:#FDFBF3}
+tbody tr:last-child td{border-bottom:none}
+.pname{font-weight:700}
+.pname .time{display:block;font-size:11.5px;color:var(--ink-soft);font-weight:400;margin-top:2px}
+.qty-big{font-weight:800;font-size:16px}
+.qty-unit{font-size:12px;color:var(--ink-soft);font-weight:600}
+.badge{
+  display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap;
+}
+.badge.cat{background:var(--green-soft);color:var(--green-deep)}
+.badge.arch{background:var(--gray-soft);color:var(--ink-soft)}
+.ops{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.stepper{
+  display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff;
+}
+.stepper button{
+  width:30px;height:30px;border:none;background:var(--paper-2);color:var(--ink);font-size:17px;line-height:1;
+  cursor:pointer;font-family:inherit;transition:background .15s;
+}
+.stepper button:hover{background:var(--line-2)}
+.stepper button:active{background:var(--line)}
+.stepper .qty{width:40px;text-align:center;font-weight:700;font-size:14px;border:none;background:#fff;color:var(--ink)}
+.stepper .qty:focus{outline:none}
+.ops-btns{display:flex;gap:7px}
+
+/* ===== 空态 ===== */
+.empty{padding:44px 20px;text-align:center;color:var(--ink-soft)}
+.empty svg{width:46px;height:46px;opacity:.35;margin-bottom:10px}
+.empty .e1{font-size:15px;font-weight:600}
+.empty .e2{font-size:13px;margin-top:4px}
+
+/* ===== 归档 ===== */
+.arch-row td{background:var(--paper-2);color:var(--ink-soft)}
+.arch-row .pname{color:var(--ink);text-decoration:none}
+.arch-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--ink-soft);background:var(--gray-soft);border-radius:999px;padding:2px 9px}
+
+/* ===== 流水 ===== */
+.log-sep{font-size:12px;color:#8a94a6;padding:10px 16px 6px;background:#f7f8fa;font-weight:600;letter-spacing:.5px}
+.log{display:flex;flex-direction:column}
+.log-item{display:flex;gap:14px;align-items:flex-start;padding:11px 2px;border-bottom:1px dashed var(--line-2)}
+.log-item:last-child{border-bottom:none}
+.log-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:2px}
+.log-ico svg{width:16px;height:16px}
+.log-ico.in{background:var(--green-soft);color:var(--green-deep)}
+.log-ico.out{background:var(--amber-soft);color:var(--amber-deep)}
+.log-ico.add{background:var(--green-soft);color:var(--green-deep)}
+.log-ico.arch{background:var(--gray-soft);color:var(--ink-soft)}
+.log-txt{flex:1;font-size:13.5px}
+.log-txt b{font-weight:700}
+.log-txt .delta{font-weight:800}
+.log-txt .delta.in{color:var(--green-deep)}
+.log-txt .delta.out{color:var(--amber-deep)}
+.log-time{font-size:12px;color:var(--ink-soft);white-space:nowrap}
+
+/* ===== 弹窗 ===== */
+.overlay{position:fixed;inset:0;background:rgba(43,40,36,.46);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px;backdrop-filter:blur(2px)}
+.overlay.hide{display:none}
+.modal{display:none;background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px -22px rgba(0,0,0,.45);width:100%;max-width:400px;padding:22px;animation:slide .2s ease;max-height:90vh;overflow:auto}
+.modal.show{display:block}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.modal-hd .mt{font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px}
+.modal-hd .mt svg{width:18px;height:18px;color:var(--green)}
+.modal .close{border:none;background:var(--paper-2);width:30px;height:30px;border-radius:9px;cursor:pointer;color:var(--ink-soft);font-size:18px;line-height:1;font-family:inherit}
+.modal .close:hover{background:var(--line-2)}
+.modal .info{font-size:13px;color:var(--ink-soft);line-height:1.7}
+.modal .info b{color:var(--ink)}
+.amt-zone{display:flex;flex-direction:column;align-items:center;gap:8px;margin:16px 0 18px}
+.dstep{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.dstep button{width:54px;height:54px;border:none;background:var(--paper-2);color:var(--ink);font-size:26px;cursor:pointer;line-height:1;font-family:inherit;transition:background .15s}
+.dstep button:hover{background:var(--line-2)}
+.dstep button:active{background:var(--line)}
+.dstep input{width:84px;text-align:center;font-size:26px;font-weight:800;border:none;background:#fff;color:var(--ink)}
+.dstep input:focus{outline:none}
+.qty-hint{font-size:12.5px;color:var(--ink-soft)}
+.presets{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px}
+.preset{font-family:inherit;font-size:13.5px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:10px 0;cursor:pointer;transition:all .15s}
+.preset:hover{border-color:var(--green);color:var(--green)}
+.preset.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.modal-ft{display:flex;gap:10px;justify-content:flex-end}
+.modal .field{margin-bottom:12px}
+.edit-note{font-size:12px;color:var(--ink-soft);background:var(--paper-2);border:1px dashed var(--line);border-radius:9px;padding:8px 11px;margin-bottom:6px}
+
+/* ===== 行操作 ===== */
+.ops-cell{display:flex;flex-direction:column;gap:9px}
+.ops-main{display:flex;gap:7px;flex-wrap:wrap}
+.ops-sub{display:flex;gap:12px;flex-wrap:wrap}
+.act-ghost{border:none;background:transparent;color:var(--ink-soft);font-size:12.5px;font-weight:600;cursor:pointer;padding:2px 0;font-family:inherit;display:inline-flex;align-items:center;gap:4px;transition:color .15s}
+.act-ghost svg{width:14px;height:14px}
+.act-ghost:hover{color:var(--green-deep)}
+.act-ghost[disabled]{opacity:.32;cursor:not-allowed}
+.act-ghost[disabled]:hover{color:var(--ink-soft)}
+.log-ico.gray{background:var(--gray-soft);color:var(--ink-soft)}
+
+/* ===== toast ===== */
+#toast{
+  position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:11px 20px;border-radius:11px;font-size:14px;
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:99;max-width:88vw;box-shadow:0 10px 30px -10px rgba(0,0,0,.4);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== 页脚 ===== */
+.foot{text-align:center;color:var(--ink-soft);font-size:12.5px;margin-top:8px;line-height:1.8}
+.foot .rule{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:6px 14px}
+.foot .rule svg{width:14px;height:14px;color:var(--green)}
+
+/* ===== 响应式 ===== */
+@media (max-width:920px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .top-actions{flex:1 1 100%;gap:6px}
+  .top-actions .btn{flex:1 1 0;min-width:0;justify-content:center;min-height:44px;font-size:13px;white-space:nowrap}
+  .top-actions .btn svg{width:15px;height:15px}
+  .form{grid-template-columns:repeat(2,1fr)}
+  .form .field.full{grid-column:span 2}
+  .form .btn{grid-column:span 2}
+}
+@media (max-width:600px){
+  .wrap{padding:18px 12px 44px}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat{padding:13px 14px}
+  .stat .num{font-size:22px}
+  .brand h1{font-size:20px}
+  .brand .mark{width:40px;height:40px}
+  .form{grid-template-columns:1fr}
+  .form .btn{grid-column:span 1}
+  .filters{flex-direction:column;align-items:stretch}
+  .log-time{display:block;margin-top:2px}
+  .field input,.field select,.search input{font-size:16px}
+  .chip{min-height:44px;display:inline-flex;align-items:center;padding:10px 16px}
+  .top-actions{flex:1;gap:6px}
+  .top-actions .btn{flex:1 1 0;min-width:0;min-height:44px;justify-content:center;padding:9px 4px;font-size:12.5px;white-space:nowrap}
+  .top-actions .btn svg{width:14px;height:14px}
+  .stepper button{width:36px;height:40px;font-size:19px}
+  .stepper .qty{width:48px}
+  .btn-sm{min-height:42px}
+  .dstep button{width:46px;height:50px;font-size:24px}
+  .dstep input{width:72px;font-size:24px}
+  .presets{grid-template-columns:repeat(3,1fr)}
+  .ops-sub{gap:10px}
+  /* 移动端卡片化：一行一卡，操作按钮置顶显示 */
+  .tbl-wrap{overflow:visible}
+  table{display:block;table-layout:auto;min-width:0;width:100%}
+  thead{display:none}
+  tbody{display:block}
+  tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  tbody tr:hover{background:#fff}
+  tbody tr>td{display:block;border:none;padding:0;background:transparent;font-size:13.5px;vertical-align:baseline}
+  tbody tr>td.c-name{flex:1 1 100%;margin-bottom:2px}
+  tbody tr>td.c-ops{flex:1 1 100%;margin-top:9px;padding-top:10px;border-top:1px dashed var(--line-2)}
+  tbody tr>td.c-ops .ops-main .btn{flex:1}
+  /* 在库清单：两行横向 —— 行1 名称+数量+金额；行2 入库/出库/详情 */
+  #viewActive tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+  #viewActive tbody tr>td.c-name{flex:1 1 0;min-width:0;margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+  #viewActive tbody tr>td.c-qty{flex:0 0 auto}
+  #viewActive tbody tr>td.c-val{flex:0 0 auto;text-align:right}
+  #viewActive tbody tr>td.c-ops{flex:1 1 100%;margin-top:9px;padding-top:10px;border-top:1px dashed var(--line-2)}
+  #viewActive tbody tr>td.c-qty:before{content:'数量 '}
+  #viewActive tbody tr>td.c-val:before{content:'金额 '}
+  #viewActive tbody tr>td.c-qty:before,#viewActive tbody tr>td.c-val:before{color:var(--ink-soft);font-weight:600}
+  #viewActive tbody tr>td.c-ops .ops-cell{flex-direction:row;align-items:stretch}
+  #viewActive tbody tr>td.c-ops .ops-main{flex:2;flex-wrap:nowrap}
+  #viewActive tbody tr>td.c-ops .ops-sub{flex:1;gap:7px}
+  #viewActive tbody tr>td.c-ops .ops-main .btn,#viewActive tbody tr>td.c-ops .ops-sub .btn{flex:1;justify-content:center}
+  /* 归档：名称 → 操作 → 分类/在库/单价/小计/渠道 */
+  #viewArch tbody tr>td.c-name{order:-3}
+  #viewArch tbody tr>td.c-ops{order:-2}
+  #viewArch tbody tr>td.c-cat:before{content:'分类 '}
+  #viewArch tbody tr>td.c-qty:before{content:'在库 '}
+  #viewArch tbody tr>td.c-price:before{content:'单价 '}
+  #viewArch tbody tr>td.c-val:before{content:'小计 '}
+  #viewArch tbody tr>td.c-ch:before{content:'渠道 '}
+  #viewArch tbody tr>td.c-cat:before,#viewArch tbody tr>td.c-qty:before,#viewArch tbody tr>td.c-price:before,#viewArch tbody tr>td.c-val:before,#viewArch tbody tr>td.c-ch:before{color:var(--ink-soft);font-weight:600}
+  #viewArch tbody tr>td.c-ch{overflow-wrap:break-word;word-break:break-all}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 顶部 ===== -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M3 4h18l-2 5H5L3 4z"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M2 4h20M10 14h4"/></svg>
+      </div>
+      <div>
+        <h1>家储日记</h1>
+        <div class="sub">居家物品的入库、出库与归档记录</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none">
+      <button class="btn btn-ghost" id="btnImport" title="按「库存」表格式导入 Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14"/></svg>
+        导入
+      </button>
+      <button class="btn btn-ghost" id="btnExport" title="导出为「库存」表格式的 Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M7 14l5 5 5-5"/><path d="M5 3h14"/></svg>
+        导出
+      </button>
+      <button class="btn btn-ghost" id="btnToggleAdd">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        新增商品
+      </button>
+      <button class="btn btn-ghost" id="btnOpenNewBook">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M8 9h8M8 13h5"/></svg>
+        新建库存
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== 库存切换 ===== -->
+  <div class="book-tabs" id="bookTabs"></div>
+
+  <!-- ===== 统计 ===== -->
+  <div class="stats">
+    <div class="stat s-green">
+      <div class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>在库商品</div>
+      <div class="num" id="statActive">0<small> 种</small></div>
+    </div>
+    <div class="stat s-accent">
+      <div class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>库存总量</div>
+      <div class="num" id="statQty">0<small> 件</small></div>
+    </div>
+    <div class="stat s-amber">
+      <div class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>库存总值</div>
+      <div class="num" id="statValue">¥0</div>
+    </div>
+    <div class="stat s-gray">
+      <div class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5h14v14H5z"/><path d="M9 9h6M9 13h6"/></svg>已归档</div>
+      <div class="num" id="statArch">0<small> 种</small></div>
+    </div>
+  </div>
+
+  <!-- ===== 视图：在库清单 ===== -->
+  <div class="view" id="viewActive">
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="ttl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>
+        在库清单
+        <span style="font-size:12.5px;color:var(--ink-soft);font-weight:600" id="countLabel"></span>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="search" type="text" placeholder="搜索商品名称或购买渠道…" autocomplete="off">
+      </div>
+      <div class="chips" id="catChips"></div>
+    </div>
+    <div class="time-filter" id="tfActiveRow">
+      <span class="tf-lab">按建档时间</span>
+      <input type="date" id="tfActiveFrom" class="tf-in">
+      <span class="tf-sep">至</span>
+      <input type="date" id="tfActiveTo" class="tf-in">
+      <button class="tf-clear" type="button" data-tf="active">清除</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <colgroup>
+          <col class="c-name"><col class="c-qty"><col class="c-val"><col class="c-ops">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>商品名称</th><th>数量</th><th>金额</th><th>入库 / 出库</th>
+          </tr>
+        </thead>
+        <tbody id="activeBody"></tbody>
+      </table>
+      <div class="empty" id="activeEmpty" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>
+        <div class="e1" id="emptyTitle">还没有在库商品</div>
+        <div class="e2">点击右下角「在库清单 / 归档记录 / 操作流水」切换页面。</div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ===== 视图：归档记录 ===== -->
+  <div class="view" id="viewArch" style="display:none">
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="ttl" style="color:var(--ink-soft)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5h14v14H5z"/><path d="M9 9h6M9 13h6"/></svg>
+        已归档（库存为零）
+        <span style="font-size:12.5px;color:var(--ink-soft);font-weight:600" id="archCount"></span>
+      </div>
+    </div>
+    <div class="time-filter" id="tfArchRow">
+      <span class="tf-lab">按建档时间</span>
+      <input type="date" id="tfArchFrom" class="tf-in">
+      <span class="tf-sep">至</span>
+      <input type="date" id="tfArchTo" class="tf-in">
+      <button class="tf-clear" type="button" data-tf="arch">清除</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <colgroup>
+          <col class="c-name"><col class="c-cat"><col class="c-qty"><col class="c-price"><col class="c-val"><col class="c-ch"><col class="c-ops">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>商品名称</th><th>分类</th><th>在库数量</th><th>单价</th><th>小计</th><th>购买渠道</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="archBody"></tbody>
+      </table>
+      <div class="empty" id="archEmpty" style="display:none">
+        <div class="e1">暂无归档商品</div>
+        <div class="e2">库存出库为 0 的商品会自动归档到这里。</div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ===== 视图：操作流水 ===== -->
+  <div class="view" id="viewLog" style="display:none">
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="ttl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        操作流水
+        <span style="font-size:12.5px;color:var(--ink-soft);font-weight:600" id="logCount"></span>
+      </div>
+    </div>
+    <div class="time-filter" id="tfLogRow">
+      <span class="tf-lab">按操作时间</span>
+      <input type="date" id="tfLogFrom" class="tf-in">
+      <span class="tf-sep">至</span>
+      <input type="date" id="tfLogTo" class="tf-in">
+      <button class="tf-clear" type="button" data-tf="log">清除</button>
+    </div>
+    <div class="panel-bd">
+      <div class="log" id="logList"></div>
+      <div class="empty" id="logEmpty" style="display:none">
+        <div class="e1">暂无操作记录</div>
+        <div class="e2">每一次入库、出库、归档都会被如实记下。</div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="foot">
+    <div class="rule">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+      写入式台账 · 商品与流水只增不删，仅在「在库 / 归档」间流转 · 数据保存在本浏览器
+    </div>
+  </div>
+</div>
+
+<!-- ===== 底部导航 ===== -->
+<nav class="tabbar">
+  <button class="tab on" data-view="active" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>在库清单
+  </button>
+  <button class="tab" data-view="arch" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5h14v14H5z"/><path d="M9 9h6M9 13h6"/></svg>归档记录
+  </button>
+  <button class="tab" data-view="log" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>操作流水
+  </button>
+</nav>
+
+<!-- ===== 弹窗 ===== -->
+<div class="overlay hide" id="overlay">
+  <div class="modal" id="qtyModal">
+    <div class="modal-hd">
+      <div class="mt" id="qModalTitle"></div>
+      <button class="close" data-close="1" type="button">&times;</button>
+    </div>
+    <div class="info" id="qItemName"></div>
+    <div class="amt-zone">
+      <div class="dstep">
+        <button type="button" id="qMinus">−</button>
+        <input id="qAmtInput" type="number" min="1" step="1" inputmode="numeric">
+        <button type="button" id="qPlus">+</button>
+      </div>
+      <div class="qty-hint" id="qCurStock"></div>
+    </div>
+    <div class="presets" id="qPresets"></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" id="qCancel" type="button">取消</button>
+      <button class="btn btn-primary" id="qConfirm" type="button">确认出库</button>
+    </div>
+  </div>
+
+  <div class="modal" id="editModal">
+    <div class="modal-hd">
+      <div class="mt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        修改商品资料
+      </div>
+      <button class="close" data-close="1" type="button">&times;</button>
+    </div>
+    <div class="edit-note">数量与价格不在此修改，只能通过入库 / 出库调整。</div>
+    <div class="field">
+      <label for="eName">商品名称</label>
+      <input id="eName" type="text" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="eCat">分类</label>
+      <select id="eCat">
+        <option value="食品">食品</option>
+        <option value="日用品">日用品</option>
+        <option value="清洁">清洁</option>
+        <option value="医药">医药</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="eCh">购买渠道</label>
+      <input id="eCh" type="text" autocomplete="off" placeholder="如：超市 / 网购 / 菜市场" list="chList">
+    </div>
+    <div class="field">
+      <label for="eUnit">单位</label>
+      <input id="eUnit" type="text" autocomplete="off" list="unitList">
+    </div>
+    <div class="field">
+      <label for="eLoc">保存地点</label>
+      <input id="eLoc" type="text" autocomplete="off" placeholder="如：厨房 / 储物间" list="locList">
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" id="eCancel" type="button">取消</button>
+      <button class="btn btn-primary" id="eSave" type="button">保存修改</button>
+    </div>
+  </div>
+
+  <div class="modal" id="addModal">
+    <div class="modal-hd">
+      <div class="mt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        新增商品
+      </div>
+      <button class="close" data-close="1" type="button">&times;</button>
+    </div>
+    <div class="field">
+      <label for="fName">商品名称 *</label>
+      <input id="fName" type="text" placeholder="如：大米 10kg" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="aBook">所属库存</label>
+      <select id="aBook"></select>
+    </div>
+    <div class="field">
+      <label for="fCat">分类</label>
+      <select id="fCat">
+        <option value="食品">食品</option>
+        <option value="日用品">日用品</option>
+        <option value="清洁">清洁</option>
+        <option value="医药">医药</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="fQty">初始数量 *</label>
+      <input id="fQty" type="number" min="0" step="1" value="1" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label for="fPrice">单价（元/件）</label>
+      <input id="fPrice" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+    </div>
+    <div class="field">
+      <label for="fTotal">总价（元）</label>
+      <input id="fTotal" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+    </div>
+    <div class="field">
+      <label for="fCh">购买渠道</label>
+      <input id="fCh" type="text" placeholder="如：超市 / 网购 / 菜市场" autocomplete="off" list="chList">
+    </div>
+    <div class="field">
+      <label for="fUnit">单位</label>
+      <input id="fUnit" type="text" value="件" autocomplete="off" list="unitList">
+    </div>
+    <div class="field">
+      <label for="fLoc">保存地点</label>
+      <input id="fLoc" type="text" placeholder="如：厨房 / 储物间" autocomplete="off" list="locList">
+    </div>
+    <div class="edit-note">系统只增不删，商品与流水不会丢失；数量随「入库 / 出库」变动，可撤销最近一次出库。</div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" id="addCancel" type="button">取消</button>
+      <button class="btn btn-primary" id="btnAdd" type="button">写入库存</button>
+    </div>
+  </div>
+
+  <div class="modal" id="detailModal">
+    <div class="modal-hd">
+      <div class="mt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>
+        商品详情
+      </div>
+      <button class="close" data-close="1" type="button">&times;</button>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+    <div class="detail-ops">
+      <button class="btn btn-ghost btn-sm" id="detailUndo" data-act="undo" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/></svg>撤销出库
+      </button>
+      <button class="btn btn-ghost btn-sm" id="detailEdit" data-act="edit" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>修改资料
+      </button>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-primary" data-close="1" type="button">完成</button>
+    </div>
+  </div>
+
+  <div class="modal" id="bookModal">
+    <div class="modal-hd">
+      <div class="mt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M8 9h8M8 13h5"/></svg>
+        新建库存
+      </div>
+      <button class="close" data-close="1" type="button">&times;</button>
+    </div>
+    <div class="field">
+      <label for="bName">库存名称 *</label>
+      <input id="bName" type="text" placeholder="如：厨房 / 老家 / 公司" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="bPwd">管理密码 *</label>
+      <input id="bPwd" type="password" placeholder="首次输入即设为管理密码" autocomplete="off">
+    </div>
+    <div class="edit-note">创建一份独立的新库存（初始为空），原有库存的商品保持不变；创建需输入管理密码。</div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" id="bookCancel" type="button">取消</button>
+      <button class="btn btn-primary" id="btnNewBook" type="button">创建库存</button>
+    </div>
+  </div>
+
+  <div class="modal" id="delBookModal">
+    <div class="modal-hd">
+      <div class="mt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>
+        删除库存
+      </div>
+      <button class="close" data-close="1" type="button">&times;</button>
+    </div>
+    <div class="confirm-body" id="delBookMsg"></div>
+    <div class="field">
+      <label for="dPwd">管理密码 *</label>
+      <input id="dPwd" type="password" placeholder="输入管理密码以确认删除" autocomplete="off">
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" id="delBookCancel" type="button">取消</button>
+      <button class="btn btn-danger" id="btnDelBook" type="button">删除</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="chList"></datalist>
+<datalist id="unitList"></datalist>
+<datalist id="locList"></datalist>
+
+<div id="toast"></div>
+
+<!-- ===== JS 逻辑 ===== -->
+<script>
+/* ===== 状态与存储 ===== */
+const STORE_KEY = 'family_inventory_v1';
+const CATS = ['食品','日用品','清洁','医药','其他'];
+
+let items = [];
+let log = [];
+let modalItem = null;      // 弹窗当前操作的商品 id
+let modalMode = 'in';      // 弹窗模式：'in' | 'out'
+let qAmt = 1;              // 弹窗所选数量
+let curCat = '全部';
+let searchKw = '';
+let books = {};            // 多库存：id → {name,items,log,createdAt}
+let curBookId = null;      // 当前激活库存 id
+let pwd = '';              // 管理密码（首次新建/删除时设置）
+let sysLog = [];           // 全局系统操作记录（创建/删除库存）
+
+function normalizeItem(x){
+  if(x.unit==null) x.unit='件';
+  x.unit = String(x.unit);
+  x.location = x.location==null ? '' : String(x.location);
+  return x;
+}
+function load(){
+  let d = null;
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      d = JSON.parse(raw);
+      if(d && d.books){
+        books = d.books;
+        for(const k in books){ books[k].items = (books[k].items||[]).map(normalizeItem); books[k].log = books[k].log||[]; }
+        curBookId = (d.curBookId && books[d.curBookId]) ? d.curBookId : Object.keys(books)[0]||null;
+      } else if(d && Array.isArray(d.items)){
+        books = { default:{ name:'我的库存', items:(d.items||[]).map(normalizeItem), log:d.log||[], createdAt:Date.now() } };
+        curBookId = 'default';
+      }
+    }
+  }catch(e){ books={}; curBookId=null; }
+  pwd = (d && d.pwd) || '';
+  sysLog = (d && d.sysLog) || [];
+  if(curBookId && books[curBookId]){ items=books[curBookId].items||[]; log=books[curBookId].log||[]; }
+  else {
+    books = { default:{ name:'我的库存', items:[], log:[], createdAt:Date.now() } };
+    curBookId = 'default'; items=[]; log=[];
+  }
+}
+function syncWidget(){
+  if(typeof window==='undefined' || !window.Android || !window.Android.saveWidget) return;
+  try{
+    // 小部件只显示库存大于 0 的商品（库存为零的自动隐藏）
+    const list = items.filter(x=>x.qty>0).map(x=>({name: x.name||'', qty: x.qty||0, unit: x.unit||''}));
+    window.Android.saveWidget(JSON.stringify(list));
+  }catch(e){}
+}
+function save(){
+  if(curBookId && books[curBookId]){ books[curBookId].items=items; books[curBookId].log=log; }
+  localStorage.setItem(STORE_KEY, JSON.stringify({books, curBookId, pwd, sysLog}));
+  syncWidget();
+}
+function checkPwd(v){
+  if(!pwd){ pwd = v; save(); return true; }  // 首次设置管理密码
+  return v === pwd;
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function fmtPrice(n){ return '¥' + Number(n||0).toFixed(2); }
+function fmtNum(n){ return Number(n||0).toLocaleString('zh-CN'); }
+function fmtTime(ts){
+  const d = new Date(ts);
+  const p = x => String(x).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ===== 提示 ===== */
+let toastTimer=null;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ===== 核心操作 ===== */
+function addItem(name, cat, qty, price, ch, unit, location, bookId){
+  const item = {
+    id: uid(), name: name.trim(), cat: cat||'其他',
+    qty: Math.max(0, Math.floor(Number(qty)||0)),
+    price: Math.max(0, Number(price)||0),
+    ch: (ch||'').trim(),
+    unit: (unit||'').trim() || '件',
+    location: (location||'').trim(),
+    archived: (Math.max(0,Math.floor(Number(qty)||0))===0),
+    lastOut: null,
+    createdAt: Date.now(), updatedAt: Date.now()
+  };
+  const bid = (bookId && books[bookId]) ? bookId : curBookId;
+  if(bid===curBookId){
+    items.push(item);
+    log.push({id:uid(), name:item.name, cat:item.cat, action:item.archived?'add-arch':'add', delta:item.qty, time:Date.now()});
+    save(); render();
+    toast('已写入：' + item.name);
+  } else {
+    books[bid].items.push(item);
+    books[bid].log.push({id:uid(), name:item.name, cat:item.cat, action:item.archived?'add-arch':'add', delta:item.qty, time:Date.now()});
+    save();
+    curBookId = bid; items = books[bid].items; log = books[bid].log;
+    searchKw=''; curCat='全部';
+    document.getElementById('search').value='';
+    renderBookTabs(); render();
+    toast('已录入到「'+books[bid].name+'」库存：' + item.name);
+  }
+}
+function inbound(id, amt){
+  const it = items.find(x=>x.id===id); if(!it) return;
+  const step = Math.max(1, Math.floor(Number(amt)||1));
+  const wasArch = it.archived;
+  it.qty += step;
+  it.archived = false;
+  it.updatedAt = Date.now();
+  log.push({id:uid(), name:it.name, cat:it.cat, action:wasArch?'restore':'in', delta:step, time:Date.now()});
+  save(); render();
+  toast('入库 +' + step + '：' + it.name);
+}
+function outbound(id, amt){
+  const it = items.find(x=>x.id===id); if(!it || it.qty<=0) return;
+  const req = Math.max(1, Math.floor(Number(amt)||1));
+  const removed = Math.min(req, it.qty);
+  it.qty -= removed;
+  it.updatedAt = Date.now();
+  const hitZero = it.qty===0;
+  if(hitZero) it.archived = true;
+  it.lastOut = {delta: removed, time: Date.now()};
+  log.push({id:uid(), name:it.name, cat:it.cat, action:hitZero?'arch':'out', delta:removed, time:Date.now()});
+  save(); render();
+  toast(hitZero ? ('出库后归零，已归档：' + it.name) : ('出库 -' + removed + '：' + it.name));
+}
+function undoOut(id){
+  const it = items.find(x=>x.id===id); if(!it || !it.lastOut) return;
+  const d = it.lastOut.delta;
+  it.qty += d;
+  it.archived = false;
+  it.updatedAt = Date.now();
+  it.lastOut = null;
+  log.push({id:uid(), name:it.name, cat:it.cat, action:'undo', delta:d, time:Date.now()});
+  save(); render();
+  toast('已撤销出库 +' + d + '：' + it.name);
+}
+function editItem(id, name, cat, ch, unit, location){
+  const it = items.find(x=>x.id===id); if(!it) return;
+  it.name = (name||'').trim() || it.name;
+  it.cat = cat || it.cat;
+  it.ch = (ch||'').trim();
+  it.unit = (unit||'').trim() || '件';
+  it.location = (location||'').trim();
+  it.updatedAt = Date.now();
+  log.push({id:uid(), name:it.name, cat:it.cat, action:'edit', delta:0, time:Date.now()});
+  save(); render();
+  toast('已修改资料：' + it.name);
+}
+
+/* ===== 渲染 ===== */
+function activeCats(){
+  const s = new Set();
+  items.forEach(x=>{ if(!x.archived && x.cat) s.add(x.cat); });
+  return [...s];
+}
+const timeF = {active:{from:'',to:''}, arch:{from:'',to:''}, log:{from:'',to:''}};
+function inTimeRange(ts, f){
+  if(!ts) return true;
+  if(f.from){ const a = new Date(f.from+'T00:00:00').getTime(); if(ts < a) return false; }
+  if(f.to){ const b = new Date(f.to+'T23:59:59.999').getTime(); if(ts > b) return false; }
+  return true;
+}
+function tfCap(k){ return k[0].toUpperCase()+k.slice(1); }
+function tfMark(k){
+  const row = document.getElementById('tf'+tfCap(k)+'Row');
+  if(row) row.classList.toggle('tf-on', !!(timeF[k].from||timeF[k].to));
+}
+function setupTimeFilters(){
+  const pairs = [['active','tfActiveFrom','tfActiveTo'],['arch','tfArchFrom','tfArchTo'],['log','tfLogFrom','tfLogTo']];
+  pairs.forEach(([k,f,t])=>{
+    const fe = document.getElementById(f), te = document.getElementById(t);
+    if(!fe || !te) return;
+    fe.value = timeF[k].from; te.value = timeF[k].to;
+    fe.addEventListener('change', ()=>{ timeF[k].from = fe.value; tfMark(k); render(); });
+    te.addEventListener('change', ()=>{ timeF[k].to = te.value; tfMark(k); render(); });
+  });
+  document.querySelectorAll('.tf-clear').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const k = b.getAttribute('data-tf');
+      timeF[k] = {from:'',to:''};
+      document.getElementById('tf'+tfCap(k)+'From').value = '';
+      document.getElementById('tf'+tfCap(k)+'To').value = '';
+      tfMark(k); render();
+    });
+  });
+}
+function filteredActive(){
+  const kw = searchKw.trim().toLowerCase();
+  return items.filter(x=>{
+    if(x.archived) return false;
+    if(curCat!=='全部' && x.cat!==curCat) return false;
+    if(kw){
+      const hay = (x.name+' '+x.ch+' '+(x.location||'')).toLowerCase();
+      if(!hay.includes(kw)) return false;
+    }
+    if(!inTimeRange(x.createdAt, timeF.active)) return false;
+    return true;
+  });
+}
+function statRow(it, archived){
+  const undoBtn = `
+        <button class="act-ghost" data-act="undo" data-id="${it.id}" ${it.lastOut?'':'disabled'}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/></svg>撤销出库
+        </button>`;
+  const editBtn = `
+        <button class="act-ghost" data-act="edit" data-id="${it.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>修改资料
+        </button>`;
+  const detailBtn = `
+        <button class="btn btn-ghost btn-sm" data-act="detail" data-id="${it.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>详情
+        </button>`;
+  if(archived){
+    const ops = `
+      <div class="ops-cell">
+        <div class="ops-main">
+          <button class="btn btn-restore btn-sm" data-act="in-open" data-id="${it.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>重新入库
+          </button>
+        </div>
+        <div class="ops-sub">${undoBtn}${editBtn}</div>
+      </div>`;
+    return `<tr class="arch-row">
+      <td class="c-name"><span class="pname">${esc(it.name)}<span class="time">建档 ${fmtTime(it.createdAt)}${it.location?' · 存 '+esc(it.location):''}</span></span></td>
+      <td class="c-cat"><span class="badge cat">${esc(it.cat)}</span></td>
+      <td class="c-qty"><span class="qty-big">${fmtNum(it.qty)}</span><span class="qty-unit"> ${esc(it.unit||'件')}</span> <span class="arch-badge">已归档</span></td>
+      <td class="c-price">${fmtPrice(it.price)}</td>
+      <td class="c-val">${fmtPrice(it.qty*it.price)}</td>
+      <td class="c-ch">${esc(it.ch)||'—'}</td>
+      <td class="c-ops"><div class="ops">${ops}</div></td>
+    </tr>`;
+  }
+  const ops = `
+      <div class="ops-cell">
+        <div class="ops-main">
+          <button class="btn btn-in btn-sm" data-act="in-open" data-id="${it.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>入库
+          </button>
+          <button class="btn btn-out btn-sm" data-act="out-open" data-id="${it.id}" ${it.qty<=0?'disabled':''}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>出库
+          </button>
+        </div>
+        <div class="ops-sub">${detailBtn}</div>
+      </div>`;
+  return `<tr>
+    <td class="c-name"><span class="pname">${esc(it.name)}</span></td>
+    <td class="c-qty"><span class="qty-big">${fmtNum(it.qty)}</span><span class="qty-unit"> ${esc(it.unit||'件')}</span></td>
+    <td class="c-val">${fmtPrice(it.qty*it.price)}</td>
+    <td class="c-ops"><div class="ops">${ops}</div></td>
+  </tr>`;
+}
+function render(){
+  renderStats();
+  renderChips();
+  renderActive();
+  renderArch();
+  renderLog();
+}
+function renderStats(){
+  const active = items.filter(x=>!x.archived);
+  const arch = items.filter(x=>x.archived);
+  document.getElementById('statActive').innerHTML = fmtNum(active.length) + '<small> 种</small>';
+  document.getElementById('statQty').innerHTML = fmtNum(active.reduce((s,x)=>s+x.qty,0)) + '<small> 件</small>';
+  document.getElementById('statValue').textContent = fmtPrice(active.reduce((s,x)=>s+x.qty*x.price,0));
+  document.getElementById('statArch').innerHTML = fmtNum(arch.length) + '<small> 种</small>';
+}
+function renderChips(){
+  const box = document.getElementById('catChips');
+  const cats = ['全部'].concat(activeCats());
+  box.innerHTML = cats.map(c=>`<button class="chip ${c===curCat?'on':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  // 当前分类若已无商品，回落
+  if(curCat!=='全部' && !cats.includes(curCat)) curCat='全部';
+}
+function renderActive(){
+  const list = filteredActive();
+  const body = document.getElementById('activeBody');
+  const empty = document.getElementById('activeEmpty');
+  body.innerHTML = list.map(x=>statRow(x,false)).join('');
+  const total = items.filter(x=>!x.archived).length;
+  document.getElementById('countLabel').textContent = `共 ${total} 种` + (list.length!==total?` · 筛选后 ${list.length} 种`:'');
+  empty.style.display = list.length ? 'none':'block';
+  document.getElementById('emptyTitle').textContent =
+    (searchKw || curCat!=='全部') ? '没有符合条件的商品' : '还没有在库商品';
+}
+function renderArch(){
+  const f = timeF.arch;
+  const hasF = !!(f.from||f.to);
+  const totalArch = items.filter(x=>x.archived);
+  const arch = totalArch.filter(x=>inTimeRange(x.createdAt,f));
+  document.getElementById('archCount').textContent = `共 ${totalArch.length} 种` + (hasF?` · 筛选后 ${arch.length} 种`:'');
+  document.getElementById('archBody').innerHTML = arch.map(x=>statRow(x,true)).join('');
+  document.getElementById('archEmpty').style.display = arch.length?'none':'block';
+}
+function renderLog(){
+  const f = timeF.log;
+  const hasF = !!(f.from||f.to);
+  const sysAll = sysLog.filter(r=>inTimeRange(r.time,f));
+  const recentAll = log.filter(r=>inTimeRange(r.time,f)).reverse();
+  const sys = hasF ? sysAll : sysAll.slice(0,40);
+  const recent = hasF ? recentAll : recentAll.slice(0,60);
+  const box = document.getElementById('logList');
+  const empty = document.getElementById('logEmpty');
+  document.getElementById('logCount').textContent = `${sysLog.length+log.length} 条` + (hasF?` · 筛选后 ${sysAll.length+recentAll.length} 条`:'');
+  const META = {
+    add:{cls:'add',t:'新增',ic:'<path d="M12 5v14M5 12h14"/>'},
+    'add-arch':{cls:'add',t:'建档即归档',ic:'<path d="M12 5v14M5 12h14"/>'},
+    in:{cls:'in',t:'入库',ic:'<path d="M12 5v14M5 12h14"/>'},
+    out:{cls:'out',t:'出库',ic:'<path d="M12 19V5M5 12l7-7 7 7"/>'},
+    arch:{cls:'arch',t:'归档',ic:'<path d="M5 5h14v14H5z"/><path d="M9 9h6M9 13h6"/>'},
+    restore:{cls:'in',t:'恢复在库',ic:'<path d="M12 5v14M5 12h14"/>'},
+    undo:{cls:'arch',t:'撤销出库',ic:'<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/>'},
+    edit:{cls:'gray',t:'修改资料',ic:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>'},
+    'imp-add':{cls:'in',t:'导入新增',ic:'<path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14"/>'},
+    'imp-upd':{cls:'in',t:'导入并入',ic:'<path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14"/>'},
+    'book-create':{cls:'in',t:'创建库存',ic:'<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><path d="M12 11v6M9 14h6"/>'},
+    'book-del':{cls:'out',t:'删除库存',ic:'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/>'}
+  };
+  const sysHtml = sys.map(r=>{
+    const m = META[r.action]||META.add;
+    return `<div class="log-item">
+      <div class="log-ico ${m.cls}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${m.ic}</svg></div>
+      <div class="log-txt"><b>${esc(r.name)}</b> · ${m.t}</div>
+      <div class="log-time">${fmtTime(r.time)}</div>
+    </div>`;
+  }).join('');
+  box.innerHTML = (sysHtml ? `<div class="log-sep">系统操作</div>`+sysHtml : '')
+    + (sysHtml && recent.length ? `<div class="log-sep">商品流水</div>` : '')
+    + recent.map(r=>{
+    const m = META[r.action]||META.add;
+    let deltaTxt = '';
+    if(r.action==='in') deltaTxt = `<span class="delta in">+${r.delta}</span>`;
+    else if(r.action==='out') deltaTxt = `<span class="delta out">-${r.delta}</span>`;
+    else if(r.action==='arch') deltaTxt = `<span class="delta out">-${r.delta} → 0</span>`;
+    else if(r.action==='restore') deltaTxt = `<span class="delta in">+${r.delta}</span>`;
+    else if(r.action==='undo') deltaTxt = `<span class="delta in">+${r.delta}</span>`;
+    else if(r.action==='add') deltaTxt = `<span class="delta in">+${r.delta}</span>`;
+    else if(r.action==='imp-add') deltaTxt = `<span class="delta in">+${r.delta}</span>`;
+    else if(r.action==='imp-upd') deltaTxt = `<span class="delta in">+${r.delta}</span>`;
+    return `<div class="log-item">
+      <div class="log-ico ${m.cls}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${m.ic}</svg></div>
+      <div class="log-txt"><b>${esc(r.name)}</b> · ${m.t} ${deltaTxt}</div>
+      <div class="log-time">${fmtTime(r.time)}</div>
+    </div>`;
+  }).join('');
+  empty.style.display = (sys.length||recent.length)?'none':'block';
+}
+
+/* ===== 事件 ===== */
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-act]');
+  if(el){
+    const act = el.dataset.act, id = el.dataset.id;
+    if(act==='in-open') openQty(id,'in');
+    else if(act==='out-open') openQty(id,'out');
+    else if(act==='undo'){ undoOut(id); closeModals(); }
+    else if(act==='edit') openEdit(id);
+    else if(act==='detail') openDetail(id);
+    return;
+  }
+  const chip = e.target.closest('[data-cat]');
+  if(chip){ curCat = chip.dataset.cat; render(); }
+});
+
+/* ===== 弹窗 ===== */
+const overlay = document.getElementById('overlay');
+const qtyModal = document.getElementById('qtyModal');
+const editModal = document.getElementById('editModal');
+const addModal = document.getElementById('addModal');
+const detailModal = document.getElementById('detailModal');
+const bookModal = document.getElementById('bookModal');
+const delBookModal = document.getElementById('delBookModal');
+
+function renderQty(){
+  const it = items.find(x=>x.id===modalItem); if(!it) return;
+  const cap = modalMode==='out' ? it.qty : 1e9;
+  if(qAmt>cap) qAmt=Math.max(1,cap);
+  if(qAmt<1) qAmt=1;
+  document.getElementById('qAmtInput').value = qAmt;
+  document.getElementById('qConfirm').textContent = modalMode==='out' ? '确认出库' : '确认入库';
+  document.querySelectorAll('#qtyModal .preset').forEach(b=>{
+    const pv = b.dataset.preset;
+    b.classList.toggle('on', pv==='all' ? (modalMode==='out' && qAmt===it.qty) : Number(pv)===qAmt);
+  });
+}
+function openQty(id, mode){
+  const it = items.find(x=>x.id===id); if(!it) return;
+  modalItem = id; modalMode = mode; qAmt = 1;
+  document.getElementById('qModalTitle').innerHTML = mode==='out'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>出库 · 选择数量'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>入库 · 选择数量';
+  document.getElementById('qItemName').innerHTML = '<b>' + esc(it.name) + '</b>';
+  document.getElementById('qCurStock').textContent = '当前库存 ' + fmtNum(it.qty) + ' 件';
+  document.getElementById('qPresets').innerHTML = (mode==='out'
+    ? [1,2,5,10].map(v=>`<button class="preset" data-preset="${v}" type="button">${v}</button>`).join('')
+      + '<button class="preset" data-preset="all" type="button">全部出清</button>'
+    : [1,5,10,20,50].map(v=>`<button class="preset" data-preset="${v}" type="button">${v}</button>`).join(''));
+  renderQty();
+  editModal.classList.remove('show');
+  addModal.classList.remove('show');
+  detailModal.classList.remove('show');
+  qtyModal.classList.add('show');
+  overlay.classList.remove('hide');
+}
+function openEdit(id){
+  const it = items.find(x=>x.id===id); if(!it) return;
+  modalItem = id;
+  document.getElementById('eName').value = it.name;
+  document.getElementById('eCat').value = it.cat;
+  document.getElementById('eCh').value = it.ch;
+  document.getElementById('eUnit').value = it.unit||'件';
+  document.getElementById('eLoc').value = it.location||'';
+  qtyModal.classList.remove('show');
+  addModal.classList.remove('show');
+  detailModal.classList.remove('show');
+  editModal.classList.add('show');
+  overlay.classList.remove('hide');
+  updateDatalists();
+}
+function openDetail(id){
+  const it = items.find(x=>x.id===id); if(!it) return;
+  modalItem = id;
+  const rows = [
+    ['商品名称', esc(it.name)],
+    ['分类', esc(it.cat)||'—'],
+    ['当前数量', fmtNum(it.qty) + ' ' + esc(it.unit||'件')],
+    ['单价', fmtPrice(it.price)],
+    ['库存金额', fmtPrice(it.qty*it.price)],
+    ['购买渠道', esc(it.ch)||'—'],
+    ['保存地点', esc(it.location)||'—'],
+    ['建档时间', fmtTime(it.createdAt)],
+    ['最近更新', fmtTime(it.updatedAt||it.createdAt)],
+    ['最近出库', it.lastOut ? fmtTime(it.lastOut.time) + '（' + fmtNum(it.lastOut.delta) + ' 件）' : '—']
+  ];
+  document.getElementById('detailBody').innerHTML = rows.map(([k,v])=>`<div class="drow"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('');
+  const u = document.getElementById('detailUndo');
+  u.disabled = !it.lastOut;
+  u.dataset.id = id;
+  document.getElementById('detailEdit').dataset.id = id;
+  qtyModal.classList.remove('show');
+  editModal.classList.remove('show');
+  addModal.classList.remove('show');
+  detailModal.classList.add('show');
+  overlay.classList.remove('hide');
+}
+function closeModals(){
+  overlay.classList.add('hide');
+  qtyModal.classList.remove('show');
+  editModal.classList.remove('show');
+  addModal.classList.remove('show');
+  detailModal.classList.remove('show');
+  bookModal.classList.remove('show');
+  delBookModal.classList.remove('show');
+  modalItem = null;
+  delBookId = null;
+}
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click', closeModals));
+document.getElementById('qMinus').addEventListener('click', ()=>{ qAmt=Math.max(1,qAmt-1); renderQty(); });
+document.getElementById('qPlus').addEventListener('click', ()=>{
+  const it = items.find(x=>x.id===modalItem);
+  const cap = modalMode==='out' && it ? it.qty : 1e9;
+  qAmt = Math.min(cap, qAmt+1); renderQty();
+});
+document.getElementById('qAmtInput').addEventListener('input', e=>{
+  let v = parseInt(e.target.value,10);
+  const it = items.find(x=>x.id===modalItem);
+  const cap = modalMode==='out' && it ? it.qty : 1e9;
+  if(isNaN(v)||v<1) v=1;
+  qAmt = Math.min(cap, v); renderQty();
+});
+document.getElementById('qPresets').addEventListener('click', e=>{
+  const b = e.target.closest('.preset'); if(!b) return;
+  const it = items.find(x=>x.id===modalItem);
+  qAmt = b.dataset.preset==='all' ? (it ? it.qty : 1) : Number(b.dataset.preset);
+  renderQty();
+});
+document.getElementById('qConfirm').addEventListener('click', ()=>{
+  if(!modalItem) return;
+  if(modalMode==='in') inbound(modalItem, qAmt);
+  else outbound(modalItem, qAmt);
+  closeModals();
+});
+document.getElementById('qCancel').addEventListener('click', closeModals);
+document.getElementById('eSave').addEventListener('click', ()=>{
+  if(!modalItem) return;
+  const nm = document.getElementById('eName').value.trim();
+  if(!nm){ toast('商品名称不能为空'); return; }
+  editItem(modalItem, nm, document.getElementById('eCat').value,
+    document.getElementById('eCh').value,
+    document.getElementById('eUnit').value,
+    document.getElementById('eLoc').value);
+  closeModals();
+});
+document.getElementById('eCancel').addEventListener('click', closeModals);
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModals(); });
+
+document.getElementById('btnToggleAdd').addEventListener('click', openAdd);
+function fillBookSelect(sel){
+  const el = document.getElementById('aBook');
+  el.innerHTML = Object.keys(books).map(id=>`<option value="${esc(id)}">${esc(books[id].name)}</option>`).join('');
+  el.value = (sel && books[sel]) ? sel : curBookId;
+}
+function openAdd(){
+  fillBookSelect(curBookId);
+  document.getElementById('fName').value='';
+  document.getElementById('fCat').value='食品';
+  document.getElementById('fQty').value='1';
+  document.getElementById('fPrice').value='0';
+  document.getElementById('fTotal').value='0';
+  document.getElementById('fCh').value='';
+  document.getElementById('fUnit').value='件';
+  document.getElementById('fLoc').value='';
+  qtyModal.classList.remove('show');
+  editModal.classList.remove('show');
+  detailModal.classList.remove('show');
+  addModal.classList.add('show');
+  overlay.classList.remove('hide');
+  updateDatalists();
+  setTimeout(()=>document.getElementById('fName').focus(),60);
+}
+document.getElementById('btnAdd').addEventListener('click', ()=>{
+  const name = document.getElementById('fName').value.trim();
+  if(!name){ toast('请填写商品名称'); document.getElementById('fName').focus(); return; }
+  addItem(name, document.getElementById('fCat').value,
+    document.getElementById('fQty').value,
+    document.getElementById('fPrice').value,
+    document.getElementById('fCh').value,
+    document.getElementById('fUnit').value,
+    document.getElementById('fLoc').value,
+    document.getElementById('aBook').value);
+  document.getElementById('fName').value='';
+  document.getElementById('fQty').value='1';
+  document.getElementById('fPrice').value='0';
+  document.getElementById('fTotal').value='0';
+  document.getElementById('fCh').value='';
+  document.getElementById('fUnit').value='件';
+  document.getElementById('fLoc').value='';
+  closeModals();
+});
+function updateDatalists(){
+  const chs = [...new Set(items.map(x=>x.ch).filter(Boolean))];
+  const locs = [...new Set(items.map(x=>x.location).filter(Boolean))];
+  const units = [...new Set(items.map(x=>(x.unit||'件')).filter(Boolean))];
+  document.getElementById('chList').innerHTML = chs.map(v=>`<option value="${esc(v)}">`).join('');
+  document.getElementById('locList').innerHTML = locs.map(v=>`<option value="${esc(v)}">`).join('');
+  document.getElementById('unitList').innerHTML = units.map(v=>`<option value="${esc(v)}">`).join('');
+}
+function syncTotal(){
+  const qty = Math.max(0, Math.floor(Number(document.getElementById('fQty').value)||0));
+  const price = Number(document.getElementById('fPrice').value)||0;
+  document.getElementById('fTotal').value = (qty*price).toFixed(2);
+}
+function onTotal(){
+  const qty = Math.max(0, Math.floor(Number(document.getElementById('fQty').value)||0));
+  const total = Number(document.getElementById('fTotal').value)||0;
+  if(qty>0){
+    document.getElementById('fPrice').value = (total/qty).toFixed(2);
+  }
+}
+document.getElementById('fQty').addEventListener('input', syncTotal);
+document.getElementById('fPrice').addEventListener('input', syncTotal);
+document.getElementById('fTotal').addEventListener('input', onTotal);
+addModal.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && e.target.tagName!=='SELECT'){ e.preventDefault(); document.getElementById('btnAdd').click(); }
+});
+document.getElementById('addCancel').addEventListener('click', closeModals);
+
+/* ===== 多库存：新建库存 + 切换 ===== */
+function renderBookTabs(){
+  const wrap = document.getElementById('bookTabs'); if(!wrap) return;
+  const ids = Object.keys(books);
+  wrap.innerHTML = ids.map(id=>{
+    const b = books[id], on = id===curBookId ? ' on':'';
+    const del = id==='default' ? '' : `<button class="book-del" type="button" data-delbook="${esc(id)}" aria-label="删除库存">&times;</button>`;
+    return `<div class="book-chip${on}" data-book="${esc(id)}"><span class="book-name">${esc(b.name)}</span>${del}</div>`;
+  }).join('') + `<button class="book-tab book-add" type="button" data-addbook="1">+ 新建</button>`;
+}
+function switchBook(id){
+  if(!books[id] || id===curBookId) return;
+  books[curBookId].items = items; books[curBookId].log = log;
+  curBookId = id;
+  items = books[id].items||[]; log = books[id].log||[];
+  searchKw=''; curCat='全部';
+  document.getElementById('search').value='';
+  closeModals(); renderBookTabs(); render(); save();
+}
+function openBookModal(){
+  closeModals();
+  document.getElementById('bName').value='';
+  document.getElementById('bPwd').value='';
+  overlay.classList.remove('hide');
+  bookModal.classList.add('show');
+  setTimeout(()=>document.getElementById('bName').focus(),60);
+}
+document.getElementById('btnOpenNewBook').addEventListener('click', openBookModal);
+document.getElementById('bookCancel').addEventListener('click', closeModals);
+document.getElementById('btnNewBook').addEventListener('click', ()=>{
+  const name = document.getElementById('bName').value.trim();
+  if(!name){ toast('请填写库存名称'); document.getElementById('bName').focus(); return; }
+  const pv = document.getElementById('bPwd').value;
+  if(!pv){ toast('请设置管理密码'); document.getElementById('bPwd').focus(); return; }
+  if(!checkPwd(pv)){ toast('密码错误'); document.getElementById('bPwd').focus(); return; }
+  books[curBookId].items = items; books[curBookId].log = log;
+  const id = uid();
+  books[id] = { name, items:[], log:[], createdAt:Date.now() };
+  curBookId = id; items=[]; log=[];
+  searchKw=''; curCat='全部';
+  document.getElementById('search').value='';
+  sysLog.unshift({action:'book-create', name, bookId:id, time:Date.now()});
+  closeModals(); renderBookTabs(); render(); save();
+  toast('已新建库存：'+name);
+});
+let delBookId = null;
+function openDelBook(id){
+  if(!books[id]) return;
+  if(id==='default'){ toast('默认库存不可删除'); return; }
+  closeModals();
+  delBookId = id;
+  const firstOther = Object.keys(books).find(k=>k!==id);
+  const targetName = firstOther ? books[firstOther].name : '';
+  document.getElementById('delBookMsg').innerHTML = '确定删除库存「'+esc(books[id].name)+'」？<br>该库存下的商品与流水将自动转移到「'+esc(targetName)+'」库存，操作不可恢复。';
+  document.getElementById('dPwd').value='';
+  overlay.classList.remove('hide');
+  delBookModal.classList.add('show');
+}
+document.getElementById('delBookCancel').addEventListener('click', closeModals);
+document.getElementById('btnDelBook').addEventListener('click', ()=>{
+  if(!delBookId || !books[delBookId]){ closeModals(); return; }
+  const keys = Object.keys(books);
+  if(keys.length<=1){ closeModals(); toast('至少保留一个库存'); return; }
+  const pv = document.getElementById('dPwd').value;
+  if(!pv){ toast('请输入管理密码'); document.getElementById('dPwd').focus(); return; }
+  if(!checkPwd(pv)){ toast('密码错误'); document.getElementById('dPwd').focus(); return; }
+  const id = delBookId;
+  const delName = books[id].name;
+  if(id===curBookId){ books[curBookId].items = items; books[curBookId].log = log; }
+  const src = books[id];
+  const srcItems = src.items||[]; const srcLog = src.log||[];
+  const transferCount = srcItems.length;
+  const targetId = keys.find(k=>k!==id);
+  const tgt = books[targetId];
+  tgt.items = (tgt.items||[]).concat(srcItems);
+  tgt.log = (tgt.log||[]).concat(srcLog);
+  delete books[id];
+  if(id===curBookId){ curBookId = targetId; items = tgt.items; log = tgt.log; }
+  sysLog.unshift({action:'book-del', name:delName, bookId:id, time:Date.now()});
+  searchKw=''; curCat='全部';
+  document.getElementById('search').value='';
+  closeModals(); renderBookTabs(); render(); save();
+  toast('已删除库存「'+delName+'」，'+transferCount+' 个商品已转移到「'+tgt.name+'」');
+});
+document.addEventListener('click', e=>{
+  const delb = e.target.closest('[data-delbook]');
+  if(delb){ openDelBook(delb.getAttribute('data-delbook')); return; }
+  const addb = e.target.closest('[data-addbook]');
+  if(addb){ openBookModal(); return; }
+  const bt = e.target.closest('[data-book]');
+  if(bt){ switchBook(bt.getAttribute('data-book')); }
+});
+document.getElementById('search').addEventListener('input', e=>{
+  searchKw = e.target.value; render();
+});
+
+/* ===== 底部导航：页面切换 ===== */
+const VIEWS={active:'viewActive',arch:'viewArch',log:'viewLog'};
+function showView(v){
+  Object.keys(VIEWS).forEach(k=>{
+    document.getElementById(VIEWS[k]).style.display = (k===v)?'':'none';
+  });
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.view===v));
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', ()=>{ showView(t.dataset.view); }));
+showView('active');
+
+/* ===== 导入 / 导出（Excel，对齐「库存」表格式） ===== */
+function importItems(rows){
+  let added=0, updated=0, skipped=0;
+  rows.forEach(r=>{
+    const name=(r.name||'').trim();
+    if(!name){ skipped++; return; }
+    const qty=Math.max(0, Math.floor(Number(r.qty)||0));
+    const unit=(r.unit||'').trim() || '件';
+    const location=(r.location||'').trim();
+    const cat=(r.cat||'').trim() || '其他';
+    const price=Math.max(0, Number(r.price)||0);
+    const ch=(r.ch||'').trim();
+    let it = r.id ? items.find(x=>x.id===r.id) : null;
+    if(!it) it = items.find(x=>x.name===name);
+    if(it){
+      it.qty += qty;
+      it.unit = unit; it.location = location;
+      if(r.cat) it.cat = cat;
+      if(r.price!==undefined && r.price!=='' && r.price!==null) it.price = price;
+      if(r.ch) it.ch = ch;
+      it.updatedAt = Date.now();
+      if(it.archived && qty>0) it.archived=false;
+      log.push({id:uid(), name:it.name, cat:it.cat, action:'imp-upd', delta:qty, time:Date.now()});
+      updated++;
+    } else {
+      const id = (r.id && !items.some(x=>x.id===r.id)) ? r.id : uid();
+      items.push({id, name, cat, qty, price, ch, unit, location,
+        archived: qty===0, lastOut:null, createdAt:Date.now(), updatedAt:Date.now()});
+      log.push({id:uid(), name, cat:'其他', action:'imp-add', delta:qty, time:Date.now()});
+      added++;
+    }
+  });
+  save(); render();
+  let msg = `导入完成：新增 ${added} 项`;
+  if(updated) msg += `，并入 ${updated} 项`;
+  if(skipped) msg += `，跳过 ${skipped} 项`;
+  toast(msg);
+}
+function handleImport(e){
+  const file = e.target.files[0]; if(!file) return;
+  if(typeof XLSX==='undefined'){ toast('导入组件未加载，请联网后刷新页面'); e.target.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      const hdr = (rows[0]||[]).map(h=>String(h==null?'':h).trim());
+      const col = {
+        name: hdr.indexOf('物品名称'), qty: hdr.indexOf('数量'),
+        unit: hdr.indexOf('单位'), location: hdr.indexOf('存放位置'), id: hdr.indexOf('物品编号'),
+        cat: hdr.indexOf('分类'), price: hdr.indexOf('单价'), ch: hdr.indexOf('购买渠道')
+      };
+      if(col.name<0){ toast('未找到「物品名称」列，无法导入'); e.target.value=''; return; }
+      const get = r=>c => (c>=0 && r[c]!==undefined && r[c]!==null) ? r[c] : '';
+      const parsed=[];
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i]; if(!r) continue;
+        const g=get(r);
+        const name=String(g(col.name)).trim(); if(!name) continue;
+        parsed.push({ name, qty:g(col.qty), unit:String(g(col.unit)).trim(),
+          location:String(g(col.location)).trim(), id:String(g(col.id)).trim(),
+          cat:String(g(col.cat)).trim(), price:g(col.price), ch:String(g(col.ch)).trim() });
+      }
+      if(!parsed.length){ toast('文件中没有可导入的商品行'); e.target.value=''; return; }
+      importItems(parsed);
+    }catch(err){ console.error(err); toast('导入失败：无法解析该 Excel 文件'); }
+    e.target.value='';
+  };
+  reader.readAsArrayBuffer(file);
+}
+function exportXlsx(){
+  try{
+    const bytes = buildExportZip();
+    const blob = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const d = new Date();
+    const p = n=>String(n).padStart(2,'0');
+    const fname = `家储日记-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.xlsx`;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    toast(`已导出 ${items.length} 行 → ${fname}`);
+  }catch(err){ console.error(err); toast('导出失败'); }
+}
+// ---- 自写最小 XLSX 生成器（对齐「库存」表格式：深绿底白字加粗表头 / 列宽 / 冻结 / 子表名） ----
+function xmlEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+let __crcT=null;
+function crc32(buf){
+  if(!__crcT){ __crcT=new Int32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); __crcT[n]=c; } }
+  let c=0xFFFFFFFF;
+  for(let i=0;i<buf.length;i++) c = __crcT[(c^buf[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+function buildZip(entries){
+  const enc=new TextEncoder(), local=[], central=[]; let offset=0;
+  for(const e of entries){
+    const nameB=enc.encode(e.name), data=e.data, crc=crc32(data);
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint16(6,0x800,true); lh.setUint16(8,0,true);
+    lh.setUint16(10,0,true); lh.setUint16(12,0,true); lh.setUint32(14,crc,true);
+    lh.setUint32(18,data.length,true); lh.setUint32(22,data.length,true); lh.setUint16(26,nameB.length,true); lh.setUint16(28,0,true);
+    local.push(new Uint8Array(lh.buffer), nameB, data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true); ch.setUint16(8,0x800,true); ch.setUint16(10,0,true);
+    ch.setUint16(12,0,true); ch.setUint16(14,0,true); ch.setUint32(16,crc,true); ch.setUint32(20,data.length,true); ch.setUint32(24,data.length,true);
+    ch.setUint16(28,nameB.length,true); ch.setUint16(30,0,true); ch.setUint16(32,0,true); ch.setUint16(34,0,true); ch.setUint16(36,0,true);
+    ch.setUint32(38,0,true); ch.setUint32(42,offset,true);
+    central.push(new Uint8Array(ch.buffer), nameB);
+    offset += 30 + nameB.length + data.length;
+  }
+  const cdStart=offset; let cdSize=0; for(const c of central) cdSize+=c.length;
+  const eocd=new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0,0x06054b50,true); eocd.setUint16(4,0,true); eocd.setUint16(6,0,true);
+  eocd.setUint16(8,entries.length,true); eocd.setUint16(10,entries.length,true);
+  eocd.setUint32(12,cdSize,true); eocd.setUint32(16,cdStart,true); eocd.setUint16(20,0,true);
+  const parts=[]; for(const a of local) parts.push(a); for(const a of central) parts.push(a); parts.push(new Uint8Array(eocd.buffer));
+  const total=parts.reduce((s,a)=>s+a.length,0), out=new Uint8Array(total); let p=0;
+  for(const a of parts){ out.set(a,p); p+=a.length; }
+  return out;
+}
+function buildXlsxZip(rows, sheetName, widths){
+  const enc=new TextEncoder();
+  let sd=''; const letters=['A','B','C','D','E','F','G','H','I','J'];
+  rows.forEach((row,ri)=>{
+    const rn=ri+1; let cells='';
+    row.forEach((val,ci)=>{
+      const addr=letters[ci]+rn, isH=ri===0, s=isH?' s="1"':'';
+      if(typeof val==='number'){ cells+=`<c r="${addr}"${s}><v>${val}</v></c>`; }
+      else{ const t=xmlEsc(val); if(t===''&&!isH) return; cells+=`<c r="${addr}"${s} t="inlineStr"><is><t xml:space="preserve">${t}</t></is></c>`; }
+    });
+    sd+=`<row r="${rn}">${cells}</row>`;
+  });
+  const colCount = Math.max(1, ...rows.map(r=>r.length));
+  let colXml=''; for(let c=1;c<=colCount;c++){ colXml += `<col min="${c}" max="${c}" width="${widths[c-1]||14}" customWidth="1"/>`; }
+  const sheetXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:${letters[colCount-1]}${rows.length}"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${colXml}</cols><sheetData>${sd}</sheetData></worksheet>`;
+  const stylesXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><name val="Microsoft YaHei"/><sz val="11"/><b/><color rgb="FFFFFFFF"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF254D3E"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+  const workbookXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${xmlEsc(sheetName)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+  const contentTypes=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`;
+  const rootRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`;
+  const wbRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+  const coreXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:creator>家储日记</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">2026-01-01T00:00:00Z</dcterms:created></cp:coreProperties>`;
+  const appXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>Doubao</Application><DocSecurity>0</DocSecurity><ScaleCrop>false</ScaleCrop><HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant><vt:variant><vt:i4>1</vt:i4></vt:variant></vt:vector></HeadingPairs><TitlesOfParts><vt:vector size="1" baseType="lpstr"><vt:lpstr>库存</vt:lpstr></vt:vector></TitlesOfParts><Company></Company><LinksUpToDate>false</LinksUpToDate><SharedDoc>false</SharedDoc><HyperlinksChanged>false</HyperlinksChanged><AppVersion>16.0300</AppVersion></Properties>`;
+  return buildZip([
+    {name:'[Content_Types].xml', data:enc.encode(contentTypes)},
+    {name:'_rels/.rels', data:enc.encode(rootRels)},
+    {name:'docProps/app.xml', data:enc.encode(appXml)},
+    {name:'docProps/core.xml', data:enc.encode(coreXml)},
+    {name:'xl/workbook.xml', data:enc.encode(workbookXml)},
+    {name:'xl/_rels/workbook.xml.rels', data:enc.encode(wbRels)},
+    {name:'xl/styles.xml', data:enc.encode(stylesXml)},
+    {name:'xl/worksheets/sheet1.xml', data:enc.encode(sheetXml)}
+  ]);
+}
+function buildExportZip(){
+  const w=[18,16,10,8,10,10,12,8,14,20];
+  const rows=[['物品名称','物品编号','分类','数量','单价','总价','购买渠道','单位','存放位置','建档时间']];
+  items.forEach(it=>{
+    rows.push([it.name, it.id, it.cat||'其他', it.qty, it.price||0, +(it.qty*(it.price||0)).toFixed(2), it.ch||'', it.unit||'件', it.location||'', fmtTime(it.createdAt)]);
+  });
+  return buildXlsxZip(rows, '库存', w);
+}
+document.getElementById('btnImport').addEventListener('click', ()=>document.getElementById('importFile').click());
+document.getElementById('btnExport').addEventListener('click', exportXlsx);
+document.getElementById('importFile').addEventListener('change', handleImport);
+
+/* ===== 启动 ===== */
+load(); render(); renderBookTabs(); syncWidget(); setupTimeFilters();
+</script>
+</body>
+</html>
