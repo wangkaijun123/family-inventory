@@ -1510,7 +1510,7 @@ function exportXlsx(){
     a.href = URL.createObjectURL(blob); a.download = fname;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
-    toast(`已导出 ${items.length} 行 → ${fname}`);
+    toast(`已导出 ${items.filter(x=>x.qty>0).length} 行 → ${fname}`);
   }catch(err){ console.error(err); toast('导出失败'); }
 }
 // ---- 自写最小 XLSX 生成器（对齐「库存」表格式：深绿底白字加粗表头 / 列宽 / 冻结 / 子表名） ----
@@ -1585,7 +1585,8 @@ function buildXlsxZip(rows, sheetName, widths){
 function buildExportZip(){
   const w=[18,16,10,8,10,10,12,8,14,20];
   const rows=[['物品名称','物品编号','分类','数量','单价','总价','购买渠道','单位','存放位置','建档时间']];
-  items.forEach(it=>{
+  // 导出不包含库存为零的商品
+  items.filter(it=>it.qty>0).forEach(it=>{
     rows.push([it.name, it.id, it.cat||'其他', it.qty, it.price||0, +(it.qty*(it.price||0)).toFixed(2), it.ch||'', it.unit||'件', it.location||'', fmtTime(it.createdAt)]);
   });
   return buildXlsxZip(rows, '库存', w);
