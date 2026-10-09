@@ -50,7 +50,7 @@ body{
 #viewActive colgroup col.c-qty{width:18%}
 #viewActive colgroup col.c-val{width:20%}
 #viewActive colgroup col.c-ops{width:24%}
-/* ===== 商品详情（二级菜单） ===== */
+/* ===== 物资详情（二级菜单） ===== */
 .detail-body{padding:8px 20px 2px;display:flex;flex-direction:column}
 .drow{display:flex;justify-content:space-between;gap:18px;padding:9px 2px;border-bottom:1px dashed var(--line-2);font-size:14px}
 .drow:last-child{border-bottom:none}
@@ -388,7 +388,7 @@ tbody tr:last-child td{border-bottom:none}
       </button>
       <button class="btn btn-ghost" id="btnToggleAdd">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        新增商品
+        新增物资
       </button>
       <button class="btn btn-ghost" id="btnOpenNewBook">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M8 9h8M8 13h5"/></svg>
@@ -403,7 +403,7 @@ tbody tr:last-child td{border-bottom:none}
   <!-- ===== 统计 ===== -->
   <div class="stats">
     <div class="stat s-green">
-      <div class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>在库商品</div>
+      <div class="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>在库物资</div>
       <div class="num" id="statActive">0<small> 种</small></div>
     </div>
     <div class="stat s-accent">
@@ -433,7 +433,7 @@ tbody tr:last-child td{border-bottom:none}
     <div class="filters">
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input id="search" type="text" placeholder="搜索商品名称或购买渠道…" autocomplete="off">
+        <input id="search" type="text" placeholder="搜索物资名称或购买渠道…" autocomplete="off">
       </div>
       <div class="chips" id="catChips"></div>
     </div>
@@ -451,14 +451,14 @@ tbody tr:last-child td{border-bottom:none}
         </colgroup>
         <thead>
           <tr>
-            <th>商品名称</th><th>数量</th><th>金额</th><th>入库 / 出库</th>
+            <th>物资名称</th><th>数量</th><th>金额</th><th>入库 / 出库</th>
           </tr>
         </thead>
         <tbody id="activeBody"></tbody>
       </table>
       <div class="empty" id="activeEmpty" style="display:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>
-        <div class="e1" id="emptyTitle">还没有在库商品</div>
+        <div class="e1" id="emptyTitle">还没有在库物资</div>
         <div class="e2">点击右下角「在库清单 / 归档记录 / 操作流水」切换页面。</div>
       </div>
     </div>
@@ -489,14 +489,14 @@ tbody tr:last-child td{border-bottom:none}
         </colgroup>
         <thead>
           <tr>
-            <th>商品名称</th><th>分类</th><th>在库数量</th><th>单价</th><th>小计</th><th>购买渠道</th><th>操作</th>
+            <th>物资名称</th><th>分类</th><th>在库数量</th><th>单价</th><th>小计</th><th>购买渠道</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="archBody"></tbody>
       </table>
       <div class="empty" id="archEmpty" style="display:none">
-        <div class="e1">暂无归档商品</div>
-        <div class="e2">库存出库为 0 的商品会自动归档到这里。</div>
+        <div class="e1">暂无归档物资</div>
+        <div class="e2">库存出库为 0 的物资会自动归档到这里。</div>
       </div>
     </div>
   </div>
@@ -532,7 +532,7 @@ tbody tr:last-child td{border-bottom:none}
   <div class="foot">
     <div class="rule">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
-      写入式台账 · 商品与流水只增不删，仅在「在库 / 归档」间流转 · 数据保存在本浏览器
+      写入式台账 · 物资与流水只增不删，仅在「在库 / 归档」间流转 · 数据保存在本浏览器
     </div>
   </div>
 </div>
@@ -577,13 +577,13 @@ tbody tr:last-child td{border-bottom:none}
     <div class="modal-hd">
       <div class="mt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        修改商品资料
+        修改物资资料
       </div>
       <button class="close" data-close="1" type="button">&times;</button>
     </div>
     <div class="edit-note">数量与价格不在此修改，只能通过入库 / 出库调整。</div>
     <div class="field">
-      <label for="eName">商品名称</label>
+      <label for="eName">物资名称</label>
       <input id="eName" type="text" autocomplete="off">
     </div>
     <div class="field">
@@ -593,6 +593,7 @@ tbody tr:last-child td{border-bottom:none}
         <option value="日用品">日用品</option>
         <option value="清洁">清洁</option>
         <option value="医药">医药</option>
+        <option value="电器">电器</option>
         <option value="其他">其他</option>
       </select>
     </div>
@@ -600,9 +601,22 @@ tbody tr:last-child td{border-bottom:none}
       <label for="eCh">购买渠道</label>
       <input id="eCh" type="text" autocomplete="off" placeholder="如：超市 / 网购 / 菜市场" list="chList">
     </div>
-    <div class="field">
+    <div class="field" id="eUnitField">
       <label for="eUnit">单位</label>
       <input id="eUnit" type="text" autocomplete="off" list="unitList">
+    </div>
+    <div class="field" id="eSpecField">
+      <label for="eSpec">物资规格</label>
+      <div style="display:flex;gap:6px">
+        <input id="eSpec" type="text" placeholder="如：500 / 2" autocomplete="off" inputmode="decimal" style="flex:1;min-width:0">
+        <select id="eSpecUnit" style="width:64px;flex:none">
+          <option value="g">g</option><option value="kg">kg</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" id="eColorField" style="display:none">
+      <label for="eColor">颜色</label>
+      <input id="eColor" type="text" placeholder="如：黑色 / 白色 / 银色" autocomplete="off" list="colorList">
     </div>
     <div class="field">
       <label for="eLoc">保存地点</label>
@@ -618,12 +632,12 @@ tbody tr:last-child td{border-bottom:none}
     <div class="modal-hd">
       <div class="mt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        新增商品
+        新增物资
       </div>
       <button class="close" data-close="1" type="button">&times;</button>
     </div>
     <div class="field">
-      <label for="fName">商品名称 *</label>
+      <label for="fName">物资名称 *</label>
       <input id="fName" type="text" placeholder="如：大米 10kg" autocomplete="off">
     </div>
     <div class="field">
@@ -637,6 +651,7 @@ tbody tr:last-child td{border-bottom:none}
         <option value="日用品">日用品</option>
         <option value="清洁">清洁</option>
         <option value="医药">医药</option>
+        <option value="电器">电器</option>
         <option value="其他">其他</option>
       </select>
     </div>
@@ -656,15 +671,28 @@ tbody tr:last-child td{border-bottom:none}
       <label for="fCh">购买渠道</label>
       <input id="fCh" type="text" placeholder="如：超市 / 网购 / 菜市场" autocomplete="off" list="chList">
     </div>
-    <div class="field">
+    <div class="field" id="fUnitField">
       <label for="fUnit">单位</label>
       <input id="fUnit" type="text" value="件" autocomplete="off" list="unitList">
+    </div>
+    <div class="field" id="fSpecField">
+      <label for="fSpec">物资规格</label>
+      <div style="display:flex;gap:6px">
+        <input id="fSpec" type="text" placeholder="如：500 / 2" autocomplete="off" inputmode="decimal" style="flex:1;min-width:0">
+        <select id="fSpecUnit" style="width:64px;flex:none">
+          <option value="g">g</option><option value="kg">kg</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" id="fColorField" style="display:none">
+      <label for="fColor">颜色</label>
+      <input id="fColor" type="text" placeholder="如：黑色 / 白色 / 银色" autocomplete="off" list="colorList">
     </div>
     <div class="field">
       <label for="fLoc">保存地点</label>
       <input id="fLoc" type="text" placeholder="如：厨房 / 储物间" autocomplete="off" list="locList">
     </div>
-    <div class="edit-note">系统只增不删，商品与流水不会丢失；数量随「入库 / 出库」变动，可撤销最近一次出库。</div>
+    <div class="edit-note">系统只增不删，物资与流水不会丢失；数量随「入库 / 出库」变动，可撤销最近一次出库。</div>
     <div class="modal-ft">
       <button class="btn btn-ghost" id="addCancel" type="button">取消</button>
       <button class="btn btn-primary" id="btnAdd" type="button">写入库存</button>
@@ -675,7 +703,7 @@ tbody tr:last-child td{border-bottom:none}
     <div class="modal-hd">
       <div class="mt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16v12H4z"/><path d="M9 10h6M9 14h6"/></svg>
-        商品详情
+        物资详情
       </div>
       <button class="close" data-close="1" type="button">&times;</button>
     </div>
@@ -709,7 +737,7 @@ tbody tr:last-child td{border-bottom:none}
       <label for="bPwd">管理密码 *</label>
       <input id="bPwd" type="password" placeholder="首次输入即设为管理密码" autocomplete="off">
     </div>
-    <div class="edit-note">创建一份独立的新库存（初始为空），原有库存的商品保持不变；创建需输入管理密码。</div>
+    <div class="edit-note">创建一份独立的新库存（初始为空），原有库存的物资保持不变；创建需输入管理密码。</div>
     <div class="modal-ft">
       <button class="btn btn-ghost" id="bookCancel" type="button">取消</button>
       <button class="btn btn-primary" id="btnNewBook" type="button">创建库存</button>
@@ -750,7 +778,7 @@ const CATS = ['食品','日用品','清洁','医药','其他'];
 
 let items = [];
 let log = [];
-let modalItem = null;      // 弹窗当前操作的商品 id
+let modalItem = null;      // 弹窗当前操作的物资 id
 let modalMode = 'in';      // 弹窗模式：'in' | 'out'
 let qAmt = 1;              // 弹窗所选数量
 let curCat = '全部';
@@ -793,7 +821,7 @@ function load(){
 function syncWidget(){
   if(typeof window==='undefined' || !window.Android || !window.Android.saveWidget) return;
   try{
-    // 小部件只显示库存大于 0 的商品（库存为零的自动隐藏）
+    // 小部件只显示库存大于 0 的物资（库存为零的自动隐藏）
     const list = items.filter(x=>x.qty>0).map(x=>({name: x.name||'', qty: x.qty||0, unit: x.unit||''}));
     window.Android.saveWidget(JSON.stringify(list));
   }catch(e){}
@@ -827,13 +855,15 @@ function toast(msg){
 }
 
 /* ===== 核心操作 ===== */
-function addItem(name, cat, qty, price, ch, unit, location, bookId){
+function addItem(name, cat, qty, price, ch, unit, location, bookId, spec, color){
   const item = {
     id: uid(), name: name.trim(), cat: cat||'其他',
     qty: Math.max(0, Math.floor(Number(qty)||0)),
     price: Math.max(0, Number(price)||0),
     ch: (ch||'').trim(),
     unit: (unit||'').trim() || '件',
+    spec: (spec||'').trim(),
+    color: (color||'').trim(),
     location: (location||'').trim(),
     archived: (Math.max(0,Math.floor(Number(qty)||0))===0),
     lastOut: null,
@@ -891,12 +921,14 @@ function undoOut(id){
   save(); render();
   toast('已撤销出库 +' + d + '：' + it.name);
 }
-function editItem(id, name, cat, ch, unit, location){
+function editItem(id, name, cat, ch, unit, location, spec, color){
   const it = items.find(x=>x.id===id); if(!it) return;
   it.name = (name||'').trim() || it.name;
   it.cat = cat || it.cat;
   it.ch = (ch||'').trim();
   it.unit = (unit||'').trim() || '件';
+  it.spec = (spec||'').trim();
+  it.color = (color||'').trim();
   it.location = (location||'').trim();
   it.updatedAt = Date.now();
   log.push({id:uid(), name:it.name, cat:it.cat, action:'edit', delta:0, time:Date.now()});
@@ -1025,7 +1057,7 @@ function renderChips(){
   const box = document.getElementById('catChips');
   const cats = ['全部'].concat(activeCats());
   box.innerHTML = cats.map(c=>`<button class="chip ${c===curCat?'on':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
-  // 当前分类若已无商品，回落
+  // 当前分类若已无物资，回落
   if(curCat!=='全部' && !cats.includes(curCat)) curCat='全部';
 }
 function renderActive(){
@@ -1037,7 +1069,7 @@ function renderActive(){
   document.getElementById('countLabel').textContent = `共 ${total} 种` + (list.length!==total?` · 筛选后 ${list.length} 种`:'');
   empty.style.display = list.length ? 'none':'block';
   document.getElementById('emptyTitle').textContent =
-    (searchKw || curCat!=='全部') ? '没有符合条件的商品' : '还没有在库商品';
+    (searchKw || curCat!=='全部') ? '没有符合条件的物资' : '还没有在库物资';
 }
 function renderArch(){
   const f = timeF.arch;
@@ -1081,7 +1113,7 @@ function renderLog(){
     </div>`;
   }).join('');
   box.innerHTML = (sysHtml ? `<div class="log-sep">系统操作</div>`+sysHtml : '')
-    + (sysHtml && recent.length ? `<div class="log-sep">商品流水</div>` : '')
+    + (sysHtml && recent.length ? `<div class="log-sep">物资流水</div>` : '')
     + recent.map(r=>{
     const m = META[r.action]||META.add;
     let deltaTxt = '';
@@ -1165,7 +1197,12 @@ function openEdit(id){
   document.getElementById('eCat').value = it.cat;
   document.getElementById('eCh').value = it.ch;
   document.getElementById('eUnit').value = it.unit||'件';
+  const _sp = it.spec||''; const _m = /^([\d.]+)\s*(g|kg)$/i.exec(_sp);
+  if(_m){ document.getElementById('eSpec').value = _m[1]; document.getElementById('eSpecUnit').value = _m[2].toLowerCase(); }
+  else { document.getElementById('eSpec').value = _sp; document.getElementById('eSpecUnit').value = 'g'; }
+  document.getElementById('eColor').value = it.color||'';
   document.getElementById('eLoc').value = it.location||'';
+  syncColorFields(it.cat);
   qtyModal.classList.remove('show');
   addModal.classList.remove('show');
   detailModal.classList.remove('show');
@@ -1177,8 +1214,10 @@ function openDetail(id){
   const it = items.find(x=>x.id===id); if(!it) return;
   modalItem = id;
   const rows = [
-    ['商品名称', esc(it.name)],
+    ['物资名称', esc(it.name)],
     ['分类', esc(it.cat)||'—'],
+    ['物资规格', esc(it.spec)||'—'],
+    ...(it.color ? [['颜色', esc(it.color)]] : []),
     ['当前数量', fmtNum(it.qty) + ' ' + esc(it.unit||'件')],
     ['单价', fmtPrice(it.price)],
     ['库存金额', fmtPrice(it.qty*it.price)],
@@ -1240,11 +1279,13 @@ document.getElementById('qCancel').addEventListener('click', closeModals);
 document.getElementById('eSave').addEventListener('click', ()=>{
   if(!modalItem) return;
   const nm = document.getElementById('eName').value.trim();
-  if(!nm){ toast('商品名称不能为空'); return; }
+  if(!nm){ toast('物资名称不能为空'); return; }
   editItem(modalItem, nm, document.getElementById('eCat').value,
     document.getElementById('eCh').value,
     document.getElementById('eUnit').value,
-    document.getElementById('eLoc').value);
+    document.getElementById('eLoc').value,
+    (document.getElementById('eSpec').value.trim() ? document.getElementById('eSpec').value.trim() + document.getElementById('eSpecUnit').value : ''),
+    document.getElementById('eColor').value);
   closeModals();
 });
 document.getElementById('eCancel').addEventListener('click', closeModals);
@@ -1265,7 +1306,11 @@ function openAdd(){
   document.getElementById('fTotal').value='0';
   document.getElementById('fCh').value='';
   document.getElementById('fUnit').value='件';
+  document.getElementById('fSpec').value='';
+  document.getElementById('fSpecUnit').value='g';
+  document.getElementById('fColor').value='';
   document.getElementById('fLoc').value='';
+  syncColorFields('食品');
   qtyModal.classList.remove('show');
   editModal.classList.remove('show');
   detailModal.classList.remove('show');
@@ -1276,20 +1321,25 @@ function openAdd(){
 }
 document.getElementById('btnAdd').addEventListener('click', ()=>{
   const name = document.getElementById('fName').value.trim();
-  if(!name){ toast('请填写商品名称'); document.getElementById('fName').focus(); return; }
+  if(!name){ toast('请填写物资名称'); document.getElementById('fName').focus(); return; }
   addItem(name, document.getElementById('fCat').value,
     document.getElementById('fQty').value,
     document.getElementById('fPrice').value,
     document.getElementById('fCh').value,
     document.getElementById('fUnit').value,
     document.getElementById('fLoc').value,
-    document.getElementById('aBook').value);
+    document.getElementById('aBook').value,
+    (document.getElementById('fSpec').value.trim() ? document.getElementById('fSpec').value.trim() + document.getElementById('fSpecUnit').value : ''),
+    document.getElementById('fColor').value);
   document.getElementById('fName').value='';
   document.getElementById('fQty').value='1';
   document.getElementById('fPrice').value='0';
   document.getElementById('fTotal').value='0';
   document.getElementById('fCh').value='';
   document.getElementById('fUnit').value='件';
+  document.getElementById('fSpec').value='';
+  document.getElementById('fSpecUnit').value='g';
+  document.getElementById('fColor').value='';
   document.getElementById('fLoc').value='';
   closeModals();
 });
@@ -1300,7 +1350,24 @@ function updateDatalists(){
   document.getElementById('chList').innerHTML = chs.map(v=>`<option value="${esc(v)}">`).join('');
   document.getElementById('locList').innerHTML = locs.map(v=>`<option value="${esc(v)}">`).join('');
   document.getElementById('unitList').innerHTML = units.map(v=>`<option value="${esc(v)}">`).join('');
+  const colors = [...new Set(items.map(x=>x.color).filter(Boolean))];
+  const cl = document.getElementById('colorList');
+  if(cl) cl.innerHTML = colors.map(v=>`<option value="${esc(v)}">`).join('');
 }
+function syncColorFields(cat){
+  const vis = cat==='电器';   // 电器：仅显示颜色，隐藏规格(g/kg)与单位；其他：显示规格与单位、隐藏颜色
+  const af = document.getElementById('fColorField'), ae = document.getElementById('eColorField');
+  const afu = document.getElementById('fUnitField'), aeu = document.getElementById('eUnitField');
+  const afs = document.getElementById('fSpecField'), aes = document.getElementById('eSpecField');
+  if(af) af.style.display = vis ? '' : 'none';
+  if(ae) ae.style.display = vis ? '' : 'none';
+  if(afu) afu.style.display = vis ? 'none' : '';
+  if(aeu) aeu.style.display = vis ? 'none' : '';
+  if(afs) afs.style.display = vis ? 'none' : '';
+  if(aes) aes.style.display = vis ? 'none' : '';
+}
+document.getElementById('fCat').addEventListener('change', e=>syncColorFields(e.target.value));
+document.getElementById('eCat').addEventListener('change', e=>syncColorFields(e.target.value));
 function syncTotal(){
   const qty = Math.max(0, Math.floor(Number(document.getElementById('fQty').value)||0));
   const price = Number(document.getElementById('fPrice').value)||0;
@@ -1374,7 +1441,7 @@ function openDelBook(id){
   delBookId = id;
   const firstOther = Object.keys(books).find(k=>k!==id);
   const targetName = firstOther ? books[firstOther].name : '';
-  document.getElementById('delBookMsg').innerHTML = '确定删除库存「'+esc(books[id].name)+'」？<br>该库存下的商品与流水将自动转移到「'+esc(targetName)+'」库存，操作不可恢复。';
+  document.getElementById('delBookMsg').innerHTML = '确定删除库存「'+esc(books[id].name)+'」？<br>该库存下的物资与流水将自动转移到「'+esc(targetName)+'」库存，操作不可恢复。';
   document.getElementById('dPwd').value='';
   overlay.classList.remove('hide');
   delBookModal.classList.add('show');
@@ -1403,7 +1470,7 @@ document.getElementById('btnDelBook').addEventListener('click', ()=>{
   searchKw=''; curCat='全部';
   document.getElementById('search').value='';
   closeModals(); renderBookTabs(); render(); save();
-  toast('已删除库存「'+delName+'」，'+transferCount+' 个商品已转移到「'+tgt.name+'」');
+  toast('已删除库存「'+delName+'」，'+transferCount+' 个物资已转移到「'+tgt.name+'」');
 });
 document.addEventListener('click', e=>{
   const delb = e.target.closest('[data-delbook]');
@@ -1445,6 +1512,8 @@ function importItems(rows){
     if(it){
       it.qty += qty;
       it.unit = unit; it.location = location;
+      if(r.spec) it.spec = (r.spec||'').trim();
+      if(r.color) it.color = (r.color||'').trim();
       if(r.cat) it.cat = cat;
       if(r.price!==undefined && r.price!=='' && r.price!==null) it.price = price;
       if(r.ch) it.ch = ch;
@@ -1454,7 +1523,7 @@ function importItems(rows){
       updated++;
     } else {
       const id = (r.id && !items.some(x=>x.id===r.id)) ? r.id : uid();
-      items.push({id, name, cat, qty, price, ch, unit, location,
+      items.push({id, name, cat, qty, price, ch, unit, spec:(r.spec||'').trim(), color:(r.color||'').trim(), location,
         archived: qty===0, lastOut:null, createdAt:Date.now(), updatedAt:Date.now()});
       log.push({id:uid(), name, cat:'其他', action:'imp-add', delta:qty, time:Date.now()});
       added++;
@@ -1478,7 +1547,7 @@ function handleImport(e){
       const hdr = (rows[0]||[]).map(h=>String(h==null?'':h).trim());
       const col = {
         name: hdr.indexOf('物品名称'), qty: hdr.indexOf('数量'),
-        unit: hdr.indexOf('单位'), location: hdr.indexOf('存放位置'), id: hdr.indexOf('物品编号'),
+        unit: hdr.indexOf('单位'), spec: hdr.indexOf('规格'), color: hdr.indexOf('颜色'), location: hdr.indexOf('存放位置'), id: hdr.indexOf('物品编号'),
         cat: hdr.indexOf('分类'), price: hdr.indexOf('单价'), ch: hdr.indexOf('购买渠道')
       };
       if(col.name<0){ toast('未找到「物品名称」列，无法导入'); e.target.value=''; return; }
@@ -1489,10 +1558,10 @@ function handleImport(e){
         const g=get(r);
         const name=String(g(col.name)).trim(); if(!name) continue;
         parsed.push({ name, qty:g(col.qty), unit:String(g(col.unit)).trim(),
-          location:String(g(col.location)).trim(), id:String(g(col.id)).trim(),
+          spec:String(g(col.spec)).trim(), color:String(g(col.color)).trim(), location:String(g(col.location)).trim(), id:String(g(col.id)).trim(),
           cat:String(g(col.cat)).trim(), price:g(col.price), ch:String(g(col.ch)).trim() });
       }
-      if(!parsed.length){ toast('文件中没有可导入的商品行'); e.target.value=''; return; }
+      if(!parsed.length){ toast('文件中没有可导入的物资行'); e.target.value=''; return; }
       importItems(parsed);
     }catch(err){ console.error(err); toast('导入失败：无法解析该 Excel 文件'); }
     e.target.value='';
@@ -1551,7 +1620,7 @@ function buildZip(entries){
 }
 function buildXlsxZip(rows, sheetName, widths){
   const enc=new TextEncoder();
-  let sd=''; const letters=['A','B','C','D','E','F','G','H','I','J'];
+  let sd=''; const letters=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
   rows.forEach((row,ri)=>{
     const rn=ri+1; let cells='';
     row.forEach((val,ci)=>{
@@ -1583,11 +1652,11 @@ function buildXlsxZip(rows, sheetName, widths){
   ]);
 }
 function buildExportZip(){
-  const w=[18,16,10,8,10,10,12,8,14,20];
-  const rows=[['物品名称','物品编号','分类','数量','单价','总价','购买渠道','单位','存放位置','建档时间']];
-  // 导出不包含库存为零的商品
+  const w=[18,16,10,8,10,10,12,8,10,10,14,20];
+  const rows=[['物品名称','物品编号','分类','数量','单价','总价','购买渠道','单位','规格','颜色','存放位置','建档时间']];
+  // 导出不包含库存为零的物资
   items.filter(it=>it.qty>0).forEach(it=>{
-    rows.push([it.name, it.id, it.cat||'其他', it.qty, it.price||0, +(it.qty*(it.price||0)).toFixed(2), it.ch||'', it.unit||'件', it.location||'', fmtTime(it.createdAt)]);
+    rows.push([it.name, it.id, it.cat||'其他', it.qty, it.price||0, +(it.qty*(it.price||0)).toFixed(2), it.ch||'', it.unit||'件', it.spec||'', it.color||'', it.location||'', fmtTime(it.createdAt)]);
   });
   return buildXlsxZip(rows, '库存', w);
 }
